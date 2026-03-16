@@ -1,0 +1,181 @@
+.nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  padding: 0 24px;
+  transition: background 0.3s, box-shadow 0.3s;
+}
+
+.navScrolled {
+  background: rgba(255,255,255,0.96);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 1px 0 var(--border), 0 4px 20px rgba(13,148,136,0.08);
+}
+
+.inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+/* Logo */
+.logo {
+  display: flex; align-items: center; gap: 10px;
+  cursor: pointer; user-select: none; flex-shrink: 0;
+}
+.logoIcon {
+  width: 38px; height: 38px; border-radius: 10px;
+  background: var(--teal);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 12px var(--teal-glow);
+}
+.cross { font-size: 18px; color: #fff; }
+.logoText { display: flex; flex-direction: column; line-height: 1.1; }
+.logoName {
+  font-family: var(--font-body); font-size: 16px; font-weight: 800;
+  color: var(--ink); letter-spacing: -0.3px;
+}
+.logoTagline {
+  font-size: 10px; font-weight: 500; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--teal);
+}
+
+/* Desktop links */
+.links { display: flex; align-items: center; gap: 2px; margin-left: auto; }
+.link {
+  background: none; border: none; cursor: pointer;
+  font-family: var(--font-body); font-size: 14px; font-weight: 500;
+  color: var(--text-2); padding: 8px 14px; border-radius: 8px;
+  transition: color 0.2s, background 0.2s;
+}
+.link:hover { color: var(--teal); background: var(--surface); }
+.ctaBtn {
+  background: var(--teal); border: none; border-radius: 10px;
+  padding: 10px 22px; font-family: var(--font-body); font-size: 13px;
+  font-weight: 700; color: #fff; cursor: pointer; margin-left: 8px;
+  display: flex; align-items: center; gap: 6px;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+}
+.ctaBtn:hover {
+  background: var(--teal-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px var(--teal-glow);
+}
+.ctaIcon { font-size: 14px; transition: transform 0.2s; }
+.ctaBtn:hover .ctaIcon { transform: translateX(3px); }
+
+/* Emergency badge */
+.emergencyBadge {
+  display: flex; align-items: center; gap: 6px;
+  background: #f0fdf4; border: 1px solid #bbf7d0;
+  border-radius: 100px; padding: 5px 12px; flex-shrink: 0;
+}
+.emergencyDot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--emerald-light);
+  animation: pulse 2s ease infinite;
+}
+.emergencyBadge span:last-child {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.5px; color: #166534;
+}
+
+/* Burger */
+.burger {
+  display: none; flex-direction: column; justify-content: center;
+  gap: 5px; width: 36px; height: 36px; padding: 4px;
+  background: none; border: none; cursor: pointer;
+}
+.burger span {
+  display: block; height: 2px; background: var(--ink);
+  border-radius: 2px; transition: all 0.3s; transform-origin: center;
+}
+.burgerOpen span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.burgerOpen span:nth-child(2) { opacity: 0; }
+.burgerOpen span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* Mobile menu */
+.mobileMenu {
+  display: none; flex-direction: column;
+  background: #fff; border-top: 1px solid var(--border);
+  max-height: 0; overflow: hidden;
+  transition: max-height 0.4s var(--ease);
+}
+.mobileOpen { max-height: 400px; }
+.mobileLink {
+  background: none; border: none; cursor: pointer;
+  font-family: var(--font-body); font-size: 15px; font-weight: 500;
+  color: var(--text-2); padding: 16px 32px; text-align: left;
+  border-bottom: 1px solid var(--border);
+  transition: color 0.2s, background 0.2s;
+}
+.mobileLink:hover { color: var(--teal); background: var(--surface); }
+
+@media (max-width: 900px) {
+  .links { display: none; }
+  .emergencyBadge { display: none; }
+  .burger { display: flex; }
+  .mobileMenu { display: flex; }
+}
+
+/* ── Right controls group ── */
+.rightControls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* ── Language switcher button ── */
+.langBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface);
+  border: 1.5px solid var(--border-2);
+  border-radius: 10px;
+  padding: 7px 13px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, transform 0.15s, box-shadow 0.15s;
+  font-family: var(--font-body);
+}
+
+.langBtn:hover {
+  border-color: var(--teal);
+  background: var(--teal-pale);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--teal-glow);
+}
+
+.langFlag { font-size: 16px; line-height: 1; }
+
+.langLabel {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--teal-dark);
+}
+
+/* ── Mobile lang button ── */
+.mobileLangBtn {
+  background: var(--teal-pale);
+  border: none;
+  border-top: 1px solid var(--border);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--teal-dark);
+  padding: 16px 32px;
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.2s;
+}
+
+.mobileLangBtn:hover { background: #b2f5ea; }
+
+@media (max-width: 900px) {
+  .rightControls { display: none; }
+}

@@ -1,0 +1,10 @@
+.root {
+  min-height: 100vh;
+  background: var(--ink);
+  position: relative;
+}
+
+/* Section transition dividers */
+.root > :not(:first-child)::before {
+  content: none;
+}

@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Environment — NEVER commit
+.env
+backend/.env
+*.env.local
+
+# Build output
+frontend/build/
+
+# Uploads (contains patient payment data)
+backend/uploads/
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*

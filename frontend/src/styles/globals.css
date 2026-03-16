@@ -1,0 +1,184 @@
+/* ══════════════════════════════════════════
+   PHARMACY DESIGN TOKENS — CLEAN CLINICAL
+   ══════════════════════════════════════════ */
+:root {
+  /* Core palette */
+  --teal:          #0d9488;
+  --teal-dark:     #0f766e;
+  --teal-deeper:   #115e59;
+  --teal-light:    #14b8a6;
+  --teal-pale:     #ccfbf1;
+  --teal-glow:     rgba(13, 148, 136, 0.15);
+  --emerald:       #059669;
+  --emerald-light: #10b981;
+  --sky:           #0ea5e9;
+  --red-soft:      #f43f5e;
+
+  /* Neutrals — light theme */
+  --white:         #ffffff;
+  --off-white:     #f8fffe;
+  --surface:       #f0fdfa;
+  --surface-2:     #e6fffa;
+  --ink:           #0f2027;
+  --ink-mid:       #1a3340;
+  --text:          #0f2027;
+  --text-2:        #2d4a52;
+  --text-3:        #5a8090;
+  --text-4:        #94adb5;
+  --border:        #d1faf4;
+  --border-2:      #b2ede4;
+
+  /* Typography */
+  --font-display: 'DM Serif Display', 'Georgia', serif;
+  --font-body:    'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-mono:    'Courier New', monospace;
+
+  /* Spacing */
+  --radius-sm:  8px;
+  --radius-md:  14px;
+  --radius-lg:  20px;
+  --radius-xl:  28px;
+
+  /* Shadows */
+  --shadow-sm:    0 2px 8px rgba(13,148,136,0.08);
+  --shadow-card:  0 8px 40px rgba(13,148,136,0.10), 0 2px 8px rgba(0,0,0,0.05);
+  --shadow-lg:    0 20px 60px rgba(13,148,136,0.14), 0 4px 16px rgba(0,0,0,0.06);
+  --shadow-glow:  0 0 40px rgba(13,148,136,0.20);
+
+  /* Transitions */
+  --ease:        cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ══════════════════════════════════════════
+   BASE
+   ══════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-body);
+  font-weight: 400;
+  color: var(--text);
+  background: var(--white);
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+#root { position: relative; z-index: 1; }
+
+/* ══════════════════════════════════════════
+   SCROLLBAR
+   ══════════════════════════════════════════ */
+::-webkit-scrollbar       { width: 5px; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: var(--teal-light); border-radius: 3px; }
+
+/* ══════════════════════════════════════════
+   SELECTION
+   ══════════════════════════════════════════ */
+::selection { background: var(--teal-pale); color: var(--teal-deeper); }
+
+/* ══════════════════════════════════════════
+   ANIMATIONS
+   ══════════════════════════════════════════ */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.6; transform: scale(0.95); }
+}
+
+@keyframes ripple {
+  0%   { transform: scale(0.6); opacity: 1; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position: 600px 0; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-12px); }
+}
+
+@keyframes pulseRing {
+  0%   { transform: scale(0.8); opacity: 1; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+/* ══════════════════════════════════════════
+   ANIMATIONS
+   ══════════════════════════════════════════ */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+@keyframes ripple {
+  0%   { transform: scale(0.6); opacity: 1; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position: 600px 0; }
+}
+
+/* ══════════════════════════════════════════
+   SCROLLBAR
+   ══════════════════════════════════════════ */
+::-webkit-scrollbar       { width: 5px; }
+::-webkit-scrollbar-track { background: var(--ink); }
+::-webkit-scrollbar-thumb { background: var(--ink-light); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--cobalt); }
+
+/* ══════════════════════════════════════════
+   SELECTION
+   ══════════════════════════════════════════ */
+::selection { background: rgba(26,86,219,0.35); color: var(--white); }
