@@ -362,7 +362,7 @@ export default function OrderForm({ embedded = false }) {
 
         {/* Payment sub-section */}
         <div className={styles.paymentSubSection}>
-          <SectionHeader number="" icon={steps[2].icon} title={steps[2].title} sub={steps[2].sub} />
+          <SectionHeader number="3" icon={steps[2].icon} title={steps[2].title} sub={steps[2].sub} />
           <div className={styles.sectionBody}>
             {bankDetails && (
               <div className={styles.bankCard}>
@@ -450,7 +450,7 @@ export default function OrderForm({ embedded = false }) {
 
       {/* ══ SECTION 3 — SHIPPING ════════════════════════════ */}
       <div className={styles.formSection}>
-        <SectionHeader number="3" icon={steps[3].icon} title={steps[3].title} sub={steps[3].sub} />
+        <SectionHeader number="4" icon={steps[3].icon} title={steps[3].title} sub={steps[3].sub} />
         <div className={styles.sectionBody}>
           <div className={styles.grid2}>
             <Field label={f.recipientName} error={errors.addressFullName} required>
