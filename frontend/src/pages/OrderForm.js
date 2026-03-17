@@ -331,7 +331,7 @@ export default function OrderForm({ embedded = false }) {
                     <button type="button" onClick={() => updateQty(item.id, 1)} className={styles.qtyBtn}>+</button>
                   </div>
                   <span className={styles.tright} style={{ fontSize: 14, color: 'var(--text-3)' }}>
-                    ৳{item.price.toFixed(2)}
+                    ${item.price.toFixed(2)}
                   </span>
                   <span className={styles.rowSubtotal}>${(item.price * item.quantity).toFixed(2)}</span>
                   <button type="button" className={styles.removeBtn} onClick={() => removeItem(item.id)} title="Remove">
