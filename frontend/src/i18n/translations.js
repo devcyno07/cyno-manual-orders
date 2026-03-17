@@ -174,7 +174,7 @@ const translations = {
       orderId:          'Order ID',
       total:            'Total',
       status:           'Status',
-      statusVal:        'Pharmacist Review',
+      statusVal:        'Order Under Review',
       newOrder:         'New Order',
     },
   },
