@@ -14,8 +14,8 @@ export const fetchProducts = async () => {
 
 export const fetchBankDetails = async () => {
   const { data } = await api.get('/bank-details');
-  return data.data || {};
-};
+  return data.data || {}; 
+}; 
 
 export const submitOrder = async (formData) => {
   const { data } = await api.post('/orders', formData, {

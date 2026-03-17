@@ -99,11 +99,11 @@ app.get('/api/bank-details', (_req, res) => {
       bankName:      process.env.BANK_NAME          || 'First National Bank',
       accountHolder: process.env.BANK_ACCOUNT_HOLDER || 'Your Company LLC',
       accountNumber: process.env.BANK_ACCOUNT_NUMBER || '1234 5678 9012',
-      routing:       process.env.BANK_ROUTING        || '021000021',
+      routing:       process.env.COMPANY_ADDRESS     || '021000021',
       swift:         process.env.BANK_SWIFT          || 'FNBAUS33XXX',
       iban:          process.env.BANK_IBAN           || '',
       branch:        process.env.BANK_BRANCH         || 'Main Branch',
-      referenceNote: process.env.BANK_REFERENCE_NOTE || 'Please include your Order ID as reference',
+      referenceNote: process.env.BANK_REFERENCE_NOTE || 'Above bank detail is valid for one week only, please always ask bank detail for next order',
     },
   });
 });

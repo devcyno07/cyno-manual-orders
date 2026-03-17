@@ -68,8 +68,8 @@ export default function OrderSection() {
           <div className={styles.footerLogo}>
             <div className={styles.footerLogoIcon}>✚</div>
             <div>
-              <div className={styles.footerLogoName}>MediCare Pharmacy</div>
-              <div className={styles.footerLogoSub}>Licensed & GDP Certified</div>
+              <div className={styles.footerLogoName}>Cyno Pharmacy</div>
+              <div className={styles.footerLogoSub}>Licensed & ISO Certified</div>
             </div>
           </div>
           <div className={styles.footerContact}>

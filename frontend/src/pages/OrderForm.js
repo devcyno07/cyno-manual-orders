@@ -385,7 +385,7 @@ export default function OrderForm({ embedded = false }) {
                     { k: f.bankFields[2], v: bankDetails.accountNumber },
                     { k: f.bankFields[3], v: bankDetails.routing },
                     { k: f.bankFields[4], v: bankDetails.swift },
-                    { k: f.bankFields[5], v: bankDetails.iban },
+                    { k: f.bankFields[5], v: bankDetails.branch },
                   ].map(({ k, v }) => (
                     <div className={styles.bankField} key={k}>
                       <span className={styles.bankKey}>{k}</span>

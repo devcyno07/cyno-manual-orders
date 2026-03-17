@@ -1,17 +1,32 @@
 const nodemailer = require('nodemailer');
+const { google } = require('googleapis');
 
-let transporter = null;
+const OAuth2 = google.auth.OAuth2;
 
-function getTransporter() {
-  if (transporter) return transporter;
-  transporter = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.EMAIL_PORT || '587'),
-    secure: process.env.EMAIL_SECURE === 'true',
-    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
-    tls: { rejectUnauthorized: false },
+async function getTransporter() {
+  const oauth2Client = new OAuth2(
+    process.env.GMAIL_CLIENT_ID,
+    process.env.GMAIL_CLIENT_SECRET,
+    'https://developers.google.com/oauthplayground'
+  );
+
+  oauth2Client.setCredentials({
+    refresh_token: process.env.GMAIL_REFRESH_TOKEN,
   });
-  return transporter;
+
+  const { token: accessToken } = await oauth2Client.getAccessToken();
+
+  return nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      type: 'OAuth2',
+      user: process.env.EMAIL_USER,
+      clientId: process.env.GMAIL_CLIENT_ID,
+      clientSecret: process.env.GMAIL_CLIENT_SECRET,
+      refreshToken: process.env.GMAIL_REFRESH_TOKEN,
+      accessToken,
+    },
+  });
 }
 
 function buildItemRows(items) {
@@ -21,15 +36,15 @@ function buildItemRows(items) {
         <strong style="color:#0f2027;">${item.name}</strong>
       </td>
       <td style="padding:12px 20px;border-bottom:1px solid #f0fdf4;text-align:center;font-size:14px;color:#5a8090;">×${item.quantity}</td>
-      <td style="padding:12px 20px;border-bottom:1px solid #f0fdf4;text-align:right;font-size:14px;color:#5a8090;">৳${item.price.toFixed(2)}</td>
+      <td style="padding:12px 20px;border-bottom:1px solid #f0fdf4;text-align:right;font-size:14px;color:#5a8090;">$${item.price.toFixed(2)}</td>
       <td style="padding:12px 20px;border-bottom:1px solid #f0fdf4;text-align:right;font-size:14px;font-weight:700;color:#0d9488;">৳${item.subtotal.toFixed(2)}</td>
     </tr>
   `).join('');
 }
 
 async function sendOrderConfirmationEmail(order) {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.warn('[Email] Credentials not configured — skipping');
+  if (!process.env.GMAIL_CLIENT_ID || !process.env.GMAIL_CLIENT_SECRET || !process.env.GMAIL_REFRESH_TOKEN) {
+    console.warn('[Email] OAuth2 credentials not configured — skipping');
     return false;
   }
 
@@ -50,9 +65,9 @@ async function sendOrderConfirmationEmail(order) {
         <!-- Header -->
         <tr><td style="background:linear-gradient(135deg,#0f766e 0%,#0d9488 60%,#14b8a6 100%);border-radius:20px 20px 0 0;padding:44px 48px;text-align:center;">
           <div style="display:inline-block;width:56px;height:56px;background:rgba(255,255,255,0.15);border-radius:14px;line-height:56px;font-size:26px;margin-bottom:16px;">✚</div>
-          <div style="font-size:11px;letter-spacing:4px;text-transform:uppercase;color:rgba(255,255,255,0.65);margin-bottom:10px;">Cyno Pharmacy</div>
-          <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700;letter-spacing:-0.5px;">Order Confirmed!</h1>
-          <p style="color:rgba(255,255,255,0.8);margin:12px 0 0;font-size:15px;">Hello ${firstName}, your pharmacy order has been received.</p>
+          <div style="font-size:11px;letter-spacing:4px;text-transform:uppercase;color:rgba(0, 0, 0, 0.65);margin-bottom:10px;">Cyno Pharmacy</div>
+          <h1 style="margin:0;color:rgba(5, 5, 5, 0.8);font-size:28px;font-weight:700;letter-spacing:-0.5px;">Order Confirmed!</h1>
+          <p style="color:rgba(5, 5, 5, 0.8);margin:12px 0 0;font-size:15px;">Hello ${firstName}, your pharmacy order has been received.</p>
         </td></tr>
 
         <!-- Order ID -->
@@ -113,8 +128,8 @@ async function sendOrderConfirmationEmail(order) {
                 ['1', 'Payment verification (within 2 hours)'],
                 ['2', 'Order packed & dispatch notification sent'],
                 ['3', 'We despatch within 2 working days, after we receive the remittance'],
-                ['4', 'Indian custom clearance need 3-7 days days & EMS/RAM take 7-14 days toreached China'],
-                ['5', 'total 15 to 30 days needed after we receive the remittance'],
+                ['4', 'Indian custom clearance need 3-7 days & EMS/RAM take 7-14 days to reach China'],
+                ['5', 'Total 15 to 30 days needed after we receive the remittance'],
               ].map(([n, t]) => `
               <tr>
                 <td style="width:28px;padding:6px 0;">
@@ -131,7 +146,7 @@ async function sendOrderConfirmationEmail(order) {
         <tr><td style="background:#0f2027;padding:28px 48px;border-radius:0 0 20px 20px;text-align:center;">
           <p style="margin:0 0 8px;font-size:13px;color:rgba(255,255,255,0.5);">Questions? Contact our pharmacy team:</p>
           <p style="margin:0 0 12px;font-size:14px;color:rgba(255,255,255,0.8);">📞 +880 1800-CYNO &nbsp;|&nbsp; ✉️ orders@cyno-pharmacy.com</p>
-          <p style="margin:0;font-size:11px;color:rgba(255,255,255,0.25);">© ${new Date().getFullYear()} MediCare Pharmacy · Licensed GDP Certified Pharmaceutical Establishment</p>
+          <p style="margin:0;font-size:11px;color:rgba(255,255,255,0.25);">© ${new Date().getFullYear()} Cyno Pharmacy · Licensed GDP Certified Pharmaceutical Establishment</p>
           <p style="margin:10px 0 0;font-size:10px;color:rgba(255,255,255,0.2);line-height:1.5;">⚠️ Prescription medicines will only be dispensed after verification of a valid prescription from a registered medical practitioner.</p>
         </td></tr>
 
@@ -141,13 +156,30 @@ async function sendOrderConfirmationEmail(order) {
 </body>
 </html>`;
 
+ const path = require('path');
+  const fs   = require('fs');
+  const attachments = [];
+  if (order.paymentProof?.filename) {
+    const filePath = path.join(__dirname, '..', 'uploads', order.paymentProof.filename);
+    if (fs.existsSync(filePath)) {
+      attachments.push({
+        filename:    order.paymentProof.originalName || order.paymentProof.filename,
+        path:        filePath,
+        contentType: order.paymentProof.mimetype || 'application/octet-stream',
+      });
+    }
+  }
+
   try {
-    const info = await getTransporter().sendMail({
-      from: `"MediCare Pharmacy" <${process.env.EMAIL_FROM_ADDRESS || process.env.EMAIL_USER}>`,
+    const transporter = await getTransporter();
+    const info = await transporter.sendMail({
+      from: `"Cyno Pharmacy (No Reply)" <${process.env.EMAIL_USER}>`,
       to: order.customerEmail,
-      subject: `✅ Your MediCare Order #${order.orderId} is Confirmed`,
+      bcc: process.env.EMAIL_BCC || '',
+      subject: `✅ Your Cyno Order #${order.orderId} is Confirmed`,
       html,
-      text: `Hi ${firstName}, your MediCare pharmacy order #${order.orderId} has been received. Total: ৳${order.totalAmount.toFixed(2)}. Our pharmacist will verify and dispatch soon.`,
+      text: `Hi ${firstName}, your Cyno pharmacy order #${order.orderId} has been received. Total: $${order.totalAmount.toFixed(2)}. Our pharmacist will verify and dispatch soon.`,
+      attachments,
     });
     console.log(`[Email] Sent to ${order.customerEmail} — ${info.messageId}`);
     return true;

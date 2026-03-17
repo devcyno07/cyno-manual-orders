@@ -12,10 +12,10 @@ export default function LandingPage() {
 
   return (
     <div style={{ background: '#ffffff' }}>
-      <Navbar />
+      {/* <Navbar />
       <HeroSection />
       <AboutSection />
-      <ProductsSection onOrderClick={scrollToOrder} />
+      <ProductsSection onOrderClick={scrollToOrder} /> */}
       <OrderSection />
     </div>
   );
