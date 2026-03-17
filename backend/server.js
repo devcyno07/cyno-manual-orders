@@ -103,7 +103,7 @@ app.get('/api/bank-details', (_req, res) => {
       swift:         process.env.BANK_SWIFT          || 'FNBAUS33XXX',
       iban:          process.env.BANK_IBAN           || '',
       branch:        process.env.BANK_BRANCH         || 'Main Branch',
-      referenceNote: process.env.BANK_REFERENCE_NOTE || 'Above bank detail is valid for one week only, please always ask bank detail for next order',
+      referenceNote: process.env.BANK_REFERENCE_NOTE || 'Buyer must cover bank charges in China and the USA (intermediary bank). If unknown, add USD 27.00. Subject to final receipt.',
     },
   });
 });
