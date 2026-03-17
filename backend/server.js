@@ -116,7 +116,8 @@ app.post('/api/orders', upload.single('paymentProof'), async (req, res) => {
       items: itemsRaw,
       addressFullName, addressLine1, addressLine2,
       city, state, postalCode, country,
-      addressPhone, deliveryNotes,
+      addressPhone,
+      remitterName, sex, age,
     } = req.body;
 
     // ── Validation ──
@@ -181,7 +182,10 @@ app.post('/api/orders', upload.single('paymentProof'), async (req, res) => {
         size:         req.file.size,
       },
       shippingAddress: {
+        remitterName: (remitterName || '').trim(),
         fullName:     (addressFullName || customerName).trim(),
+        sex:          (sex || '').trim(),
+        age:          (age || '').trim(),
         addressLine1: addressLine1.trim(),
         addressLine2: (addressLine2 || '').trim(),
         city:         city.trim(),
@@ -189,7 +193,6 @@ app.post('/api/orders', upload.single('paymentProof'), async (req, res) => {
         postalCode:   postalCode.trim(),
         country:      country.trim(),
         phone:        (addressPhone || contactNumber).trim(),
-        deliveryNotes:(deliveryNotes || '').trim(),
       },
       ipAddress: req.ip,
     });

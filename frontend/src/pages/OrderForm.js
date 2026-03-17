@@ -113,9 +113,10 @@ const INITIAL_FORM = {
   customerName: '', customerEmail: '', contactNumber: '',
   items: [],
   paymentProof: null,
-  addressFullName: '', addressLine1: '', addressLine2: '',
+  remitterName: '', addressFullName: '', sex: '', age: '',
+  addressLine1: '', addressLine2: '',
   city: '', state: '', postalCode: '', country: '',
-  addressPhone: '', deliveryNotes: '',
+  addressPhone: '',
 };
 
 export default function OrderForm({ embedded = false }) {
@@ -194,7 +195,10 @@ export default function OrderForm({ embedded = false }) {
     if (!form.contactNumber.trim())  e.contactNumber  = f.contact     + ' is required';
     if (!form.items.length)          e.items          = f.noSelected;
     if (!form.paymentProof)          e.paymentProof   = f.uploadRequired || 'Payment proof is required';
-    if (!form.addressFullName.trim())e.addressFullName= f.recipientName + ' is required';
+    if (!form.remitterName.trim())   e.remitterName   = f.remitterName  + ' is required';
+    if (!form.addressFullName.trim()) e.addressFullName= f.recipientName + ' is required';
+    if (!form.sex.trim())            e.sex            = f.sex           + ' is required';
+    if (!form.age.trim())            e.age            = f.age           + ' is required';
     if (!form.addressLine1.trim())   e.addressLine1   = f.street      + ' is required';
     if (!form.city.trim())           e.city           = f.city        + ' is required';
     if (!form.state.trim())          e.state          = f.state       + ' is required';
@@ -220,7 +224,10 @@ export default function OrderForm({ embedded = false }) {
       fd.append('customerEmail',   form.customerEmail);
       fd.append('contactNumber',   form.contactNumber);
       fd.append('items',           JSON.stringify(form.items));
+      fd.append('remitterName',    form.remitterName);
       fd.append('addressFullName', form.addressFullName || form.customerName);
+      fd.append('sex',             form.sex);
+      fd.append('age',             form.age);
       fd.append('addressLine1',    form.addressLine1);
       fd.append('addressLine2',    form.addressLine2 || '');
       fd.append('city',            form.city);
@@ -228,7 +235,6 @@ export default function OrderForm({ embedded = false }) {
       fd.append('postalCode',      form.postalCode);
       fd.append('country',         form.country);
       fd.append('addressPhone',    form.addressPhone || form.contactNumber);
-      fd.append('deliveryNotes',   form.deliveryNotes || '');
       if (form.paymentProof) fd.append('paymentProof', form.paymentProof);
       const result = await submitOrder(fd);
       setSubmitted(result.data);
@@ -453,15 +459,29 @@ export default function OrderForm({ embedded = false }) {
         <SectionHeader number="4" icon={steps[3].icon} title={steps[3].title} sub={steps[3].sub} />
         <div className={styles.sectionBody}>
           <div className={styles.grid2}>
+            <Field label={f.remitterName} error={errors.remitterName} required>
+              <Input placeholder={f.remitterPh} value={form.remitterName} error={errors.remitterName}
+                onChange={e => set('remitterName', e.target.value)} />
+            </Field>
             <Field label={f.recipientName} error={errors.addressFullName} required>
               <Input placeholder={f.recipientPh} value={form.addressFullName} error={errors.addressFullName}
                 onChange={e => set('addressFullName', e.target.value)} />
             </Field>
-            <Field label={f.deliveryPhone}>
-              <Input placeholder={f.deliveryPhonePh} value={form.addressPhone}
-                onChange={e => set('addressPhone', e.target.value)} />
+          </div>
+          <div className={styles.grid2}>
+            <Field label={f.sex} error={errors.sex} required>
+              <Input placeholder={f.sexPh} value={form.sex} error={errors.sex}
+                onChange={e => set('sex', e.target.value)} />
+            </Field>
+            <Field label={f.age} error={errors.age} required>
+              <Input placeholder={f.agePh} value={form.age} error={errors.age}
+                onChange={e => set('age', e.target.value)} />
             </Field>
           </div>
+          <Field label={f.deliveryPhone}>
+            <Input placeholder={f.deliveryPhonePh} value={form.addressPhone}
+              onChange={e => set('addressPhone', e.target.value)} />
+          </Field>
           <Field label={f.street} error={errors.addressLine1} required>
             <Input placeholder={f.streetPh} value={form.addressLine1} error={errors.addressLine1}
               onChange={e => set('addressLine1', e.target.value)} />
@@ -495,11 +515,11 @@ export default function OrderForm({ embedded = false }) {
               <span className={styles.chevron}>▾</span>
             </div>
           </Field>
-          <Field label={f.deliveryNotes}>
+          {/* <Field label={f.deliveryNotes}>
             <textarea className={`${styles.input} ${styles.textarea}`} rows={3}
               placeholder={f.deliveryNotesPh} value={form.deliveryNotes}
               onChange={e => setForm(fr => ({ ...fr, deliveryNotes: e.target.value }))} />
-          </Field>
+          </Field> */}
 
           {form.items.length > 0 && (
             <div className={styles.orderSummary}>

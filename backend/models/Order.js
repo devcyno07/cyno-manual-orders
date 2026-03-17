@@ -9,15 +9,17 @@ const OrderItemSchema = new mongoose.Schema({
 });
 
 const ShippingAddressSchema = new mongoose.Schema({
-  fullName: { type: String, required: true },
-  addressLine1: { type: String, required: true },
-  addressLine2: { type: String, default: '' },
-  city: { type: String, required: true },
-  state: { type: String, required: true },
-  postalCode: { type: String, required: true },
-  country: { type: String, required: true },
-  phone: { type: String, default: '' },
-  deliveryNotes: { type: String, default: '' },
+  remitterName:  { type: String, default: '' },
+  fullName:      { type: String, required: true },  // Consignee Name
+  sex:           { type: String, default: '' },
+  age:           { type: String, default: '' },
+  addressLine1:  { type: String, required: true },
+  addressLine2:  { type: String, default: '' },
+  city:          { type: String, required: true },
+  state:         { type: String, required: true },  // Province
+  postalCode:    { type: String, required: true },
+  country:       { type: String, required: true },
+  phone:         { type: String, default: '' },
 });
 
 const OrderSchema = new mongoose.Schema(
@@ -48,10 +50,10 @@ const OrderSchema = new mongoose.Schema(
 
     // ── Payment ────────────────────────────────────────────────────
     paymentProof: {
-      filename: { type: String, default: null },
+      filename:     { type: String, default: null },
       originalName: { type: String, default: null },
-      mimetype: { type: String, default: null },
-      size: { type: Number, default: null },
+      mimetype:     { type: String, default: null },
+      size:         { type: Number, default: null },
     },
 
     // ── Shipping ───────────────────────────────────────────────────
@@ -67,12 +69,9 @@ const OrderSchema = new mongoose.Schema(
     emailSent: { type: Boolean, default: false },
     ipAddress: { type: String, default: '' },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-// Virtual: formatted total
 OrderSchema.virtual('formattedTotal').get(function () {
   return `$${this.totalAmount.toFixed(2)}`;
 });

@@ -1,5 +1,7 @@
 const nodemailer = require('nodemailer');
 const { google } = require('googleapis');
+const path = require('path');
+const fs   = require('fs');
 
 const OAuth2 = google.auth.OAuth2;
 
@@ -37,9 +39,18 @@ function buildItemRows(items) {
       </td>
       <td style="padding:12px 20px;border-bottom:1px solid #f0fdf4;text-align:center;font-size:14px;color:#5a8090;">×${item.quantity}</td>
       <td style="padding:12px 20px;border-bottom:1px solid #f0fdf4;text-align:right;font-size:14px;color:#5a8090;">$${item.price.toFixed(2)}</td>
-      <td style="padding:12px 20px;border-bottom:1px solid #f0fdf4;text-align:right;font-size:14px;font-weight:700;color:#0d9488;">৳${item.subtotal.toFixed(2)}</td>
+      <td style="padding:12px 20px;border-bottom:1px solid #f0fdf4;text-align:right;font-size:14px;font-weight:700;color:#0d9488;">$${item.subtotal.toFixed(2)}</td>
     </tr>
   `).join('');
+}
+
+function buildShippingRow(label, value) {
+  if (!value) return '';
+  return `
+    <tr>
+      <td style="padding:7px 0;font-size:12px;color:#5a8090;width:140px;vertical-align:top;">${label}</td>
+      <td style="padding:7px 0;font-size:13px;color:#134e4a;font-weight:600;">${value}</td>
+    </tr>`;
 }
 
 async function sendOrderConfirmationEmail(order) {
@@ -53,6 +64,9 @@ async function sendOrderConfirmationEmail(order) {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
   });
 
+  const addr = order.shippingAddress;
+  const fullAddress = [addr.addressLine1, addr.addressLine2].filter(Boolean).join(', ');
+
   const html = `
 <!DOCTYPE html>
 <html lang="en">
@@ -65,9 +79,9 @@ async function sendOrderConfirmationEmail(order) {
         <!-- Header -->
         <tr><td style="background:linear-gradient(135deg,#0f766e 0%,#0d9488 60%,#14b8a6 100%);border-radius:20px 20px 0 0;padding:44px 48px;text-align:center;">
           <div style="display:inline-block;width:56px;height:56px;background:rgba(255,255,255,0.15);border-radius:14px;line-height:56px;font-size:26px;margin-bottom:16px;">✚</div>
-          <div style="font-size:11px;letter-spacing:4px;text-transform:uppercase;color:rgba(0, 0, 0, 0.65);margin-bottom:10px;">Cyno Pharmacy</div>
-          <h1 style="margin:0;color:rgba(5, 5, 5, 0.8);font-size:28px;font-weight:700;letter-spacing:-0.5px;">Order Confirmed!</h1>
-          <p style="color:rgba(5, 5, 5, 0.8);margin:12px 0 0;font-size:15px;">Hello ${firstName}, your pharmacy order has been received.</p>
+          <div style="font-size:11px;letter-spacing:4px;text-transform:uppercase;color:rgba(0,0,0,0.65);margin-bottom:10px;">Cyno Pharmacy</div>
+          <h1 style="margin:0;color:rgba(5,5,5,0.8);font-size:28px;font-weight:700;letter-spacing:-0.5px;">Order Confirmed!</h1>
+          <p style="color:rgba(5,5,5,0.8);margin:12px 0 0;font-size:15px;">Hello ${firstName}, your pharmacy order has been received.</p>
         </td></tr>
 
         <!-- Order ID -->
@@ -79,7 +93,7 @@ async function sendOrderConfirmationEmail(order) {
         </td></tr>
 
         <!-- Pharmacist notice -->
-        <tr><td style="background:#fffbeb;border:1px solid #fde68a;border-radius:0;padding:16px 48px;">
+        <tr><td style="background:#fffbeb;border:1px solid #fde68a;padding:16px 48px;">
           <p style="margin:0;font-size:13px;color:#92400e;line-height:1.6;">
             ⚕️ <strong>Verification Review:</strong> Our team will verify your order and uploaded payment proof within 2 hours. You'll receive a dispatch confirmation once verified.
           </p>
@@ -108,16 +122,21 @@ async function sendOrderConfirmationEmail(order) {
             </tfoot>
           </table>
 
-          <!-- Shipping -->
-          <h2 style="margin:0 0 14px;font-size:16px;font-weight:700;color:#0f2027;">📦 Delivery Address</h2>
+          <!-- Shipping Details -->
+          <h2 style="margin:0 0 14px;font-size:16px;font-weight:700;color:#0f2027;">📦 Delivery Details</h2>
           <div style="background:#f0fdfa;border-radius:12px;padding:18px 22px;border:1px solid #ccfbf1;margin-bottom:28px;">
-            <p style="margin:0;color:#134e4a;line-height:1.8;font-size:14px;">
-              <strong>${order.shippingAddress.fullName}</strong><br>
-              ${order.shippingAddress.addressLine1}${order.shippingAddress.addressLine2 ? ', ' + order.shippingAddress.addressLine2 : ''}<br>
-              ${order.shippingAddress.city}, ${order.shippingAddress.state} ${order.shippingAddress.postalCode}<br>
-              ${order.shippingAddress.country}
-            </p>
-            ${order.shippingAddress.phone ? `<p style="margin:10px 0 0;font-size:13px;color:#5a8090;">📞 ${order.shippingAddress.phone}</p>` : ''}
+            <table width="100%" cellpadding="0" cellspacing="0">
+              ${buildShippingRow('Remitter Name',  addr.remitterName)}
+              ${buildShippingRow('Consignee Name', addr.fullName)}
+              ${buildShippingRow('Sex',            addr.sex)}
+              ${buildShippingRow('Age',            addr.age)}
+              ${buildShippingRow('Address',        fullAddress)}
+              ${buildShippingRow('City',           addr.city)}
+              ${buildShippingRow('Province',       addr.state)}
+              ${buildShippingRow('PIN / ZIP',      addr.postalCode)}
+              ${buildShippingRow('Country',        addr.country)}
+              ${buildShippingRow('Phone',          addr.phone)}
+            </table>
           </div>
 
           <!-- Steps -->
@@ -156,8 +175,7 @@ async function sendOrderConfirmationEmail(order) {
 </body>
 </html>`;
 
- const path = require('path');
-  const fs   = require('fs');
+  // ── Attachment ──────────────────────────────────────────────────────────────
   const attachments = [];
   if (order.paymentProof?.filename) {
     const filePath = path.join(__dirname, '..', 'uploads', order.paymentProof.filename);
@@ -173,9 +191,9 @@ async function sendOrderConfirmationEmail(order) {
   try {
     const transporter = await getTransporter();
     const info = await transporter.sendMail({
-      from: `"Cyno Pharmacy (No Reply)" <${process.env.EMAIL_USER}>`,
-      to: order.customerEmail,
-      bcc: process.env.EMAIL_BCC || '',
+      from:    `"Cyno Pharmacy (No Reply)" <${process.env.EMAIL_USER}>`,
+      to:      order.customerEmail,
+      bcc:     process.env.EMAIL_BCC || '',
       subject: `✅ Your Cyno Order #${order.orderId} is Confirmed`,
       html,
       text: `Hi ${firstName}, your Cyno pharmacy order #${order.orderId} has been received. Total: $${order.totalAmount.toFixed(2)}. Our pharmacist will verify and dispatch soon.`,
