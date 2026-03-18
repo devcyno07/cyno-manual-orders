@@ -170,7 +170,7 @@ app.post('/api/orders', upload.single('paymentProof'), async (req, res) => {
       orderId,
       customerName:  customerName.trim(),
       customerEmail: customerEmail.trim().toLowerCase(),
-      contactNumber: contactNumber.trim(),
+      contactNumber: contactNumber.trim().replace(/[^\d+\s\-().]/g, ''),
       items:         enrichedItems,
       subtotalAmount,
       shippingFee:   0,
@@ -192,7 +192,7 @@ app.post('/api/orders', upload.single('paymentProof'), async (req, res) => {
         state:        state.trim(),
         postalCode:   postalCode.trim(),
         country:      country.trim(),
-        phone:        (addressPhone || contactNumber).trim(),
+        phone: (addressPhone || contactNumber).trim().replace(/[^\d+\s\-().]/g, ''),
       },
       ipAddress: req.ip,
     });

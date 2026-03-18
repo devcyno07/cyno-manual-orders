@@ -233,6 +233,31 @@ export default function OrderChatBot() {
       return;
     }
 
+    if (step.id === 'contactNumber' && !/^\+?[\d\s\-().]{7,20}$/.test(val)) {
+      botSay(lang === 'zh' ? '❌ 请输入有效的电话号码，例如 +86 138 0000 0000。' : '❌ Please enter a valid phone number e.g. +86 138 0000 0000.', {}, 300);
+      return;
+    }
+
+    if (step.id === 'phone' && !/^\+?[\d\s\-().]{7,20}$/.test(val)) {
+      botSay(lang === 'zh' ? '❌ 请输入有效的联系电话。' : '❌ Please enter a valid phone number.', {}, 300);
+      return;
+    }
+
+    if (step.id === 'age' && (!/^\d+$/.test(val) || parseInt(val) < 1 || parseInt(val) > 120)) {
+      botSay(lang === 'zh' ? '❌ 请输入有效的年龄（1-120）。' : '❌ Please enter a valid age (1–120).', {}, 300);
+      return;
+    }
+
+    if (step.id === 'customerName' && val.length < 2) {
+      botSay(lang === 'zh' ? '❌ 请输入您的全名。' : '❌ Please enter your full name (at least 2 characters).', {}, 300);
+      return;
+    }
+
+    if (step.id === 'postalCode' && !/^[\w\s\-]{3,12}$/.test(val)) {
+      botSay(lang === 'zh' ? '❌ 请输入有效的邮政编码。' : '❌ Please enter a valid postal code.', {}, 300);
+      return;
+    }
+
     addMessage('user', val);
     setInput('');
     advance(stepIdx + 1, step.field ? { [step.field]: val } : {});
