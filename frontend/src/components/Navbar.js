@@ -34,7 +34,7 @@ export default function Navbar() {
 
         {/* Desktop nav */}
         <nav className={styles.links}>
-          {[
+          {/* {[
             [n.home,     'hero'],
             [n.about,    'about'],
             [n.products, 'products'],
@@ -47,7 +47,7 @@ export default function Navbar() {
           <button className={styles.ctaBtn} onClick={() => scrollTo('order')}>
             {n.orderNow}
             <span className={styles.ctaIcon}>→</span>
-          </button>
+          </button> */}
         </nav>
 
         {/* Right side controls */}
