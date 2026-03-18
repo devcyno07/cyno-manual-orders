@@ -4,6 +4,7 @@ import HeroSection from '../components/HeroSection';
 import AboutSection from '../components/AboutSection';
 import ProductsSection from '../components/ProductsSection';
 import OrderSection from '../components/OrderSection';
+import OrderChatBot from '../components/OrderChatBot';
 
 export default function LandingPage() {
   const scrollToOrder = useCallback(() => {
@@ -17,6 +18,7 @@ export default function LandingPage() {
       <AboutSection />
       <ProductsSection onOrderClick={scrollToOrder} /> */}
       <OrderSection />
+      <OrderChatBot/>
     </div>
   );
 }
