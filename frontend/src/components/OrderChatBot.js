@@ -188,8 +188,8 @@ export default function OrderChatBot() {
 
     if (step.id === 'bankInfo' && bankDetails) {
       const bankMsg = lang === 'zh'
-        ? `🏦 **银行转账详情**\n\n**银行：** ${bankDetails.bankName}\n**账户持有人：** ${bankDetails.accountHolder}\n**账户号码：** ${bankDetails.accountNumber}\n**公司地址：** ${bankDetails.routing}\n**SWIFT：** ${bankDetails.swift}\n**支行：** ${bankDetails.branch}\n\n💰 **应付金额：** $${cartItems.reduce((s, i) => s + i.price * i.quantity, 0).toFixed(2)}\n\n⚠️ ${bankDetails.referenceNote}`
-        : `🏦 **Bank Transfer Details**\n\n**Bank:** ${bankDetails.bankName}\n**Account Holder:** ${bankDetails.accountHolder}\n**Account No:** ${bankDetails.accountNumber}\n**Company Address:** ${bankDetails.routing}\n**SWIFT:** ${bankDetails.swift}\n**Branch:** ${bankDetails.branch}\n\n💰 **Amount to Pay:** $${cartItems.reduce((s, i) => s + i.price * i.quantity, 0).toFixed(2)}\n\n⚠️ ${bankDetails.referenceNote}`;
+        ? `🏦 **银行转账详情**\n\n🔔 现在只接受通过银行电汇（TT/Cable/Wire）汇款到印度公司账户。\n\n**银行：** ${bankDetails.bankName}\n**账户持有人：** ${bankDetails.accountHolder}\n**账户号码：** ${bankDetails.accountNumber}\n**公司地址：** ${bankDetails.routing}\n**SWIFT：** ${bankDetails.swift}\n**支行：** ${bankDetails.branch}\n\n💰 **应付金额：** $${cartItems.reduce((s, i) => s + i.price * i.quantity, 0).toFixed(2)}\n\n⚠️ ${bankDetails.referenceNote}`
+        : `🏦 **Bank Transfer Details**\n\n🔔 Remittance only TT / Cable / wire transfer by Bank to Company account in India is acceptable now.\n\n**Bank:** ${bankDetails.bankName}\n**Account Holder:** ${bankDetails.accountHolder}\n**Account No:** ${bankDetails.accountNumber}\n**Company Address:** ${bankDetails.routing}\n**SWIFT:** ${bankDetails.swift}\n**Bank Branch:** ${bankDetails.branch}\n\n💰 **Amount to Pay:** $${cartItems.reduce((s, i) => s + i.price * i.quantity, 0).toFixed(2)}\n\n⚠️ ${bankDetails.referenceNote}`;
       botSay(bankMsg, { type: 'bank' }, 500);
       setTimeout(() => {
         botSay(questions.paymentProof, { type: 'file' }, 1400);
