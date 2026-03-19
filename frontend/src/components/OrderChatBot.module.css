@@ -653,3 +653,59 @@
     right: 20px;
   }
 }
+
+/* ── Back Button ──────────────────────────────────────────────────────── */
+.backBtn {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1.5px solid var(--border-2);
+  color: var(--teal);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.2s, border-color 0.2s;
+}
+.backBtn:hover {
+  background: var(--teal-pale);
+  border-color: var(--teal);
+}
+
+.backBtnFull {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 13px;
+  background: var(--surface);
+  border: 1.5px solid var(--border-2);
+  border-radius: 10px;
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--teal);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  width: fit-content;
+  margin-bottom: 4px;
+}
+.backBtnFull:hover {
+  background: var(--teal-pale);
+  border-color: var(--teal);
+}
+
+/* ── Choices Wrap ─────────────────────────────────────────────────────── */
+.choicesWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ── File Wrap ────────────────────────────────────────────────────────── */
+.fileWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
