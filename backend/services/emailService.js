@@ -144,8 +144,8 @@ async function sendOrderConfirmationEmail(order) {
             <p style="margin:0 0 14px;font-size:14px;font-weight:700;color:#0d9488;">⚕️ What Happens Next?</p>
             <table width="100%" cellpadding="0" cellspacing="0">
               ${[
-                ['1', 'Payment verification (within 2 hours)'],
-                ['2', 'Order packed & dispatch notification sent'],
+                ['1', 'Payment verification'],
+                ['2', 'Order packed & dispatch notification will be sent'],
                 ['3', 'We despatch within 2 working days, after we receive the remittance'],
                 ['4', 'Indian custom clearance need 3-7 days & EMS/RAM take 7-14 days to reach China'],
                 ['5', 'Total 15 to 30 days needed after we receive the remittance'],

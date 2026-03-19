@@ -6,6 +6,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
+const { createWooCommerceOrder } = require('./services/woocommerceService');
 
 const Order = require('./models/Order');
 const { fetchProductsFromSheet } = require('./services/productService');
@@ -203,6 +204,18 @@ app.post('/api/orders', upload.single('paymentProof'), async (req, res) => {
         if (sent) Order.findByIdAndUpdate(order._id, { emailSent: true }).exec();
       })
       .catch(err => console.error('[Email async error]', err.message));
+
+    // ── Create WooCommerce draft order (non-blocking) ──
+    createWooCommerceOrder(order)
+      .then(wcOrder => {
+        if (wcOrder?.id) {
+          Order.findByIdAndUpdate(order._id, {
+            $set: { 'meta.wcOrderId': wcOrder.id }
+          }).exec();
+          console.log(`[WC] Linked WC Order #${wcOrder.id} to MERN Order ${order.orderId}`);
+        }
+      })
+      .catch(err => console.error('[WC async error]', err.message));
 
     res.status(201).json({
       success: true,
