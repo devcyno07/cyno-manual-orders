@@ -119,6 +119,75 @@ const INITIAL_FORM = {
   addressPhone: '',
 };
 
+// ── Per-field validators ─────────────────────────────────────────────────────
+const validateField = (k, v, f) => {
+  switch (k) {
+    case 'customerName':
+      if (!v.trim()) return f.fullName + ' is required';
+      if (v.trim().length < 2) return 'Name must be at least 2 characters';
+      return null;
+
+    case 'customerEmail':
+      if (!v.trim()) return f.email + ' is required';
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim())) return 'Please enter a valid email address';
+      return null;
+
+    case 'contactNumber':
+      if (!v.trim()) return f.contact + ' is required';
+      if (!/^\+?[\d\s\-().]{7,20}$/.test(v.trim())) return 'Enter a valid phone number e.g. +86 138 0000 0000';
+      return null;
+
+    case 'remitterName':
+      if (!v.trim()) return f.remitterName + ' is required';
+      if (v.trim().length < 2) return 'Name must be at least 2 characters';
+      return null;
+
+    case 'addressFullName':
+      if (!v.trim()) return f.recipientName + ' is required';
+      if (v.trim().length < 2) return 'Name must be at least 2 characters';
+      return null;
+
+    case 'sex':
+      if (!v.trim()) return f.sex + ' is required';
+      return null;
+
+    case 'age':
+      if (!v.trim()) return f.age + ' is required';
+      if (!/^\d+$/.test(v.trim())) return 'Age must be a number';
+      if (parseInt(v) < 1 || parseInt(v) > 120) return 'Please enter a valid age (1–120)';
+      return null;
+
+    case 'addressPhone':
+      if (v && !/^\+?[\d\s\-().]{7,20}$/.test(v.trim())) return 'Enter a valid phone number';
+      return null;
+
+    case 'addressLine1':
+      if (!v.trim()) return f.street + ' is required';
+      if (v.trim().length < 5) return 'Please enter a complete street address';
+      return null;
+
+    case 'city':
+      if (!v.trim()) return f.city + ' is required';
+      return null;
+
+    case 'state':
+      if (!v.trim()) return f.state + ' is required';
+      return null;
+
+    case 'postalCode':
+      if (!v.trim()) return f.postal + ' is required';
+      if (!/^[a-zA-Z0-9\s\-]{3,10}$/.test(v.trim())) return 'Enter a valid postal/ZIP code';
+      return null;
+
+    case 'country':
+      if (!v) return f.country + ' is required';
+      return null;
+
+    default:
+      return null;
+  }
+};
+
 export default function OrderForm({ embedded = false }) {
   const { t } = useLang();
   const f = t.form;
@@ -126,6 +195,7 @@ export default function OrderForm({ embedded = false }) {
 
   const [form, setForm]         = useState(INITIAL_FORM);
   const [errors, setErrors]     = useState({});
+  const [touched, setTouched]   = useState({});  // track which fields user has interacted with
   const [products, setProducts] = useState([]);
   const [loadingProds, setLoadingProds] = useState(true);
   const [bankDetails, setBankDetails]   = useState(null);
@@ -144,12 +214,33 @@ export default function OrderForm({ embedded = false }) {
     fetchBankDetails().then(setBankDetails).catch(console.error);
   }, []);
 
-  const clearErr = useCallback(
-    (k) => setErrors(e => { const n = { ...e }; delete n[k]; return n; }),
-    []
-  );
-  const set = (k, v) => { setForm(fr => ({ ...fr, [k]: v })); clearErr(k); };
   const total = form.items.reduce((s, i) => s + i.price * i.quantity, 0);
+
+  // ── Smart set: restricts input + validates in real time ──────────────────
+  const set = useCallback((k, v) => {
+    setForm(fr => ({ ...fr, [k]: v }));
+    // Only show error in real time if field has been touched
+    setTouched(t => ({ ...t, [k]: true }));
+    setErrors(e => {
+      const err = validateField(k, v, f);
+      if (err) return { ...e, [k]: err };
+      const n = { ...e };
+      delete n[k];
+      return n;
+    });
+  }, [f]);
+
+  // ── Blur handler: validate when user leaves a field ──────────────────────
+  const handleBlur = useCallback((k) => {
+    setTouched(t => ({ ...t, [k]: true }));
+    setErrors(e => {
+      const err = validateField(k, form[k], f);
+      if (err) return { ...e, [k]: err };
+      const n = { ...e };
+      delete n[k];
+      return n;
+    });
+  }, [form, f]);
 
   const addProduct = (e) => {
     const id = e.target.value;
@@ -163,7 +254,7 @@ export default function OrderForm({ embedded = false }) {
         : [...fr.items, { ...product, quantity: 1 }];
       return { ...fr, items };
     });
-    clearErr('items');
+    setErrors(e => { const n = { ...e }; delete n.items; return n; });
     e.target.value = '';
   };
 
@@ -185,28 +276,27 @@ export default function OrderForm({ embedded = false }) {
     if (file.size > 5 * 1024 * 1024)
       return alert('File must be under 5MB.');
     setForm(fr => ({ ...fr, paymentProof: file }));
-    clearErr('paymentProof');
+    setErrors(e => { const n = { ...e }; delete n.paymentProof; return n; });
   };
 
+  // ── Full validate on submit ──────────────────────────────────────────────
   const validate = () => {
     const e = {};
-    if (!form.customerName.trim())   e.customerName   = f.fullName    + ' is required';
-    if (!/^\S+@\S+\.\S+$/.test(form.customerEmail)) e.customerEmail = f.email + ' is required';
-    if (!form.contactNumber.trim())  e.contactNumber  = f.contact + ' is required';
-    else if (!/^\+?[\d\s\-().]{7,20}$/.test(form.contactNumber.trim())) e.contactNumber = 'Please enter a valid phone number e.g. +86 138 0000 0000';
-    if (!form.items.length)          e.items          = f.noSelected;
-    if (!form.paymentProof)          e.paymentProof   = f.uploadRequired || 'Payment proof is required';
-    if (!form.remitterName.trim())   e.remitterName   = f.remitterName  + ' is required';
-    if (!form.addressFullName.trim()) e.addressFullName= f.recipientName + ' is required';
-    if (!form.sex.trim())            e.sex            = f.sex           + ' is required';
-    if (!form.age.trim())            e.age = f.age + ' is required';
-    else if (!/^\d+$/.test(form.age.trim()) || parseInt(form.age) < 1 || parseInt(form.age) > 120) e.age = 'Please enter a valid age (1–120)';
-    if (!form.addressLine1.trim())   e.addressLine1   = f.street      + ' is required';
-    if (!form.city.trim())           e.city           = f.city        + ' is required';
-    if (!form.state.trim())          e.state          = f.state       + ' is required';
-    if (!form.postalCode.trim())     e.postalCode     = f.postal      + ' is required';
-    if (!form.country)               e.country        = f.country     + ' is required';
+    const fields = ['customerName','customerEmail','contactNumber','remitterName',
+      'addressFullName','sex','age','addressLine1','city','state','postalCode','country'];
+    fields.forEach(k => {
+      const err = validateField(k, form[k], f);
+      if (err) e[k] = err;
+    });
+    if (form.addressPhone) {
+      const err = validateField('addressPhone', form.addressPhone, f);
+      if (err) e.addressPhone = err;
+    }
+    if (!form.items.length) e.items = f.noSelected;
+    if (!form.paymentProof) e.paymentProof = f.uploadRequired || 'Payment proof is required';
     setErrors(e);
+    // Mark all fields as touched
+    setTouched(Object.fromEntries(fields.map(k => [k, true])));
     if (Object.keys(e).length > 0) {
       setTimeout(() => {
         const el = document.querySelector('.' + styles.fieldError);
@@ -252,7 +342,7 @@ export default function OrderForm({ embedded = false }) {
   };
 
   const reset = () => {
-    setForm(INITIAL_FORM); setSubmitted(null); setErrors({}); setApiError('');
+    setForm(INITIAL_FORM); setSubmitted(null); setErrors({}); setTouched({}); setApiError('');
     formTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
@@ -269,18 +359,50 @@ export default function OrderForm({ embedded = false }) {
         <SectionHeader number="1" icon={steps[0].icon} title={steps[0].title} sub={steps[0].sub} />
         <div className={styles.sectionBody}>
           <div className={styles.grid2}>
+
+            {/* Full Name — letters + spaces only */}
             <Field label={f.fullName} error={errors.customerName} required>
-              <Input placeholder={f.fullNamePh} value={form.customerName} error={errors.customerName}
-                onChange={e => set('customerName', e.target.value)} />
+              <Input
+                placeholder={f.fullNamePh}
+                value={form.customerName}
+                error={errors.customerName}
+                maxLength={60}
+                onChange={e => {
+                  const val = e.target.value.replace(/[^a-zA-Z\s]/g, '');
+                  set('customerName', val);
+                }}
+                onBlur={() => handleBlur('customerName')}
+              />
             </Field>
+
+            {/* Email */}
             <Field label={f.email} error={errors.customerEmail} required>
-              <Input type="email" placeholder={f.emailPh} value={form.customerEmail} error={errors.customerEmail}
-                onChange={e => set('customerEmail', e.target.value)} />
+              <Input
+                type="email"
+                placeholder={f.emailPh}
+                value={form.customerEmail}
+                error={errors.customerEmail}
+                maxLength={100}
+                onChange={e => set('customerEmail', e.target.value.trim())}
+                onBlur={() => handleBlur('customerEmail')}
+              />
             </Field>
           </div>
+
+          {/* Contact Number — digits, +, spaces, dashes, brackets only */}
           <Field label={f.contact} error={errors.contactNumber} required hint={f.contactHint}>
-            <Input placeholder={f.contactPh} value={form.contactNumber} error={errors.contactNumber}
-              onChange={e => set('contactNumber', e.target.value)} />
+            <Input
+              placeholder={f.contactPh}
+              value={form.contactNumber}
+              error={errors.contactNumber}
+              inputMode="tel"
+              maxLength={20}
+              onChange={e => {
+                const val = e.target.value.replace(/[^\d\s+\-().]/g, '');
+                set('contactNumber', val);
+              }}
+              onBlur={() => handleBlur('contactNumber')}
+            />
           </Field>
         </div>
       </div>
@@ -411,7 +533,7 @@ export default function OrderForm({ embedded = false }) {
               </div>
             )}
 
-            {/* Upload — REQUIRED */}
+            {/* Upload */}
             <div className={styles.uploadSection}>
               <label className={styles.label}>
                 {f.uploadLabel}
@@ -461,67 +583,177 @@ export default function OrderForm({ embedded = false }) {
         <SectionHeader number="4" icon={steps[3].icon} title={steps[3].title} sub={steps[3].sub} />
         <div className={styles.sectionBody}>
           <div className={styles.grid2}>
+
+            {/* Remitter Name — letters + spaces only */}
             <Field label={f.remitterName} error={errors.remitterName} required>
-              <Input placeholder={f.remitterPh} value={form.remitterName} error={errors.remitterName}
-                onChange={e => set('remitterName', e.target.value)} />
+              <Input
+                placeholder={f.remitterPh}
+                value={form.remitterName}
+                error={errors.remitterName}
+                maxLength={60}
+                onChange={e => {
+                  const val = e.target.value.replace(/[^a-zA-Z\s]/g, '');
+                  set('remitterName', val);
+                }}
+                onBlur={() => handleBlur('remitterName')}
+              />
             </Field>
+
+            {/* Recipient Name — letters + spaces only */}
             <Field label={f.recipientName} error={errors.addressFullName} required>
-              <Input placeholder={f.recipientPh} value={form.addressFullName} error={errors.addressFullName}
-                onChange={e => set('addressFullName', e.target.value)} />
+              <Input
+                placeholder={f.recipientPh}
+                value={form.addressFullName}
+                error={errors.addressFullName}
+                maxLength={60}
+                onChange={e => {
+                  const val = e.target.value.replace(/[^a-zA-Z\s]/g, '');
+                  set('addressFullName', val);
+                }}
+                onBlur={() => handleBlur('addressFullName')}
+              />
             </Field>
           </div>
+
           <div className={styles.grid2}>
+
+            {/* Sex — dropdown */}
             <Field label={f.sex} error={errors.sex} required>
-              <Input placeholder={f.sexPh} value={form.sex} error={errors.sex}
-                onChange={e => set('sex', e.target.value)} />
+              <div className={styles.selectWrap}>
+                <select
+                  className={`${styles.input} ${styles.select} ${errors.sex ? styles.inputError : ''}`}
+                  value={form.sex}
+                  onChange={e => set('sex', e.target.value)}
+                  onBlur={() => handleBlur('sex')}
+                >
+                  <option value="">{f.sexPh || 'Select gender'}</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+                <span className={styles.chevron}>▾</span>
+              </div>
             </Field>
+
+            {/* Age — numbers only, max 3 digits */}
             <Field label={f.age} error={errors.age} required>
-              <Input placeholder={f.agePh} value={form.age} error={errors.age}
-                onChange={e => set('age', e.target.value)} />
+              <Input
+                placeholder={f.agePh}
+                value={form.age}
+                error={errors.age}
+                inputMode="numeric"
+                maxLength={3}
+                onChange={e => {
+                  const val = e.target.value.replace(/\D/g, '');
+                  set('age', val);
+                }}
+                onBlur={() => handleBlur('age')}
+              />
             </Field>
           </div>
-          <Field label={f.deliveryPhone}>
-            <Input placeholder={f.deliveryPhonePh} value={form.addressPhone}
-              onChange={e => set('addressPhone', e.target.value)} />
+
+          {/* Delivery Phone — optional, digits + + - () spaces */}
+          <Field label={f.deliveryPhone} error={errors.addressPhone}>
+            <Input
+              placeholder={f.deliveryPhonePh}
+              value={form.addressPhone}
+              error={errors.addressPhone}
+              inputMode="tel"
+              maxLength={20}
+              onChange={e => {
+                const val = e.target.value.replace(/[^\d\s+\-().]/g, '');
+                set('addressPhone', val);
+              }}
+              onBlur={() => handleBlur('addressPhone')}
+            />
           </Field>
+
+          {/* Street Address */}
           <Field label={f.street} error={errors.addressLine1} required>
-            <Input placeholder={f.streetPh} value={form.addressLine1} error={errors.addressLine1}
-              onChange={e => set('addressLine1', e.target.value)} />
+            <Input
+              placeholder={f.streetPh}
+              value={form.addressLine1}
+              error={errors.addressLine1}
+              maxLength={100}
+              onChange={e => set('addressLine1', e.target.value)}
+              onBlur={() => handleBlur('addressLine1')}
+            />
           </Field>
+
+          {/* Apt/Suite — optional, no restriction */}
           <Field label={f.apt}>
-            <Input placeholder={f.aptPh} value={form.addressLine2}
-              onChange={e => set('addressLine2', e.target.value)} />
+            <Input
+              placeholder={f.aptPh}
+              value={form.addressLine2}
+              maxLength={60}
+              onChange={e => set('addressLine2', e.target.value)}
+            />
           </Field>
+
           <div className={styles.grid3}>
+
+            {/* City — letters + spaces only */}
             <Field label={f.city} error={errors.city} required>
-              <Input placeholder={f.cityPh} value={form.city} error={errors.city}
-                onChange={e => set('city', e.target.value)} />
+              <Input
+                placeholder={f.cityPh}
+                value={form.city}
+                error={errors.city}
+                maxLength={50}
+                onChange={e => {
+                  const val = e.target.value.replace(/[^a-zA-Z\s]/g, '');
+                  set('city', val);
+                }}
+                onBlur={() => handleBlur('city')}
+              />
             </Field>
+
+            {/* State — letters + spaces only */}
             <Field label={f.state} error={errors.state} required>
-              <Input placeholder={f.statePh} value={form.state} error={errors.state}
-                onChange={e => set('state', e.target.value)} />
+              <Input
+                placeholder={f.statePh}
+                value={form.state}
+                error={errors.state}
+                maxLength={50}
+                onChange={e => {
+                  const val = e.target.value.replace(/[^a-zA-Z\s]/g, '');
+                  set('state', val);
+                }}
+                onBlur={() => handleBlur('state')}
+              />
             </Field>
+
+            {/* Postal Code — alphanumeric only */}
             <Field label={f.postal} error={errors.postalCode} required>
-              <Input placeholder={f.postalPh} value={form.postalCode} error={errors.postalCode}
-                onChange={e => set('postalCode', e.target.value)} />
+              <Input
+                placeholder={f.postalPh}
+                value={form.postalCode}
+                error={errors.postalCode}
+                inputMode="text"
+                maxLength={10}
+                onChange={e => {
+                  const val = e.target.value.replace(/[^a-zA-Z0-9\s\-]/g, '').toUpperCase();
+                  set('postalCode', val);
+                }}
+                onBlur={() => handleBlur('postalCode')}
+              />
             </Field>
           </div>
+
+          {/* Country — dropdown */}
           <Field label={f.country} error={errors.country} required>
             <div className={styles.selectWrap}>
               <select
                 className={`${styles.input} ${styles.select} ${errors.country ? styles.inputError : ''}`}
-                value={form.country} onChange={e => set('country', e.target.value)}>
+                value={form.country}
+                onChange={e => set('country', e.target.value)}
+                onBlur={() => handleBlur('country')}
+              >
                 <option value="">{f.countryPh}</option>
                 {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
               <span className={styles.chevron}>▾</span>
             </div>
           </Field>
-          {/* <Field label={f.deliveryNotes}>
-            <textarea className={`${styles.input} ${styles.textarea}`} rows={3}
-              placeholder={f.deliveryNotesPh} value={form.deliveryNotes}
-              onChange={e => setForm(fr => ({ ...fr, deliveryNotes: e.target.value }))} />
-          </Field> */}
 
           {form.items.length > 0 && (
             <div className={styles.orderSummary}>
