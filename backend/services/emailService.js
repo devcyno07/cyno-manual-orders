@@ -95,7 +95,7 @@ async function sendOrderConfirmationEmail(order) {
         <!-- Pharmacist notice -->
         <tr><td style="background:#fffbeb;border:1px solid #fde68a;padding:16px 48px;">
           <p style="margin:0;font-size:13px;color:#92400e;line-height:1.6;">
-            ⚕️ <strong>Verification Review:</strong> Our team will verify your order and uploaded payment proof within 2 hours. You'll receive a dispatch confirmation once verified.
+            ⚕️ <strong>Verification Review:</strong> Our team will verify your order and uploaded payment proof. You'll receive a dispatch confirmation once verified.
           </p>
         </td></tr>
 
@@ -166,7 +166,7 @@ async function sendOrderConfirmationEmail(order) {
           <p style="margin:0 0 8px;font-size:13px;color:rgba(255,255,255,0.5);">Questions? Contact our pharmacy team:</p>
           <p style="margin:0 0 12px;font-size:14px;color:rgba(255,255,255,0.8);">📞 +880 1800-CYNO &nbsp;|&nbsp; ✉️ orders@cyno-pharmacy.com</p>
           <p style="margin:0;font-size:11px;color:rgba(255,255,255,0.25);">© ${new Date().getFullYear()} Cyno Pharmacy · Licensed GDP Certified Pharmaceutical Establishment</p>
-          <p style="margin:10px 0 0;font-size:10px;color:rgba(255,255,255,0.2);line-height:1.5;">⚠️ Prescription medicines will only be dispensed after verification of a valid prescription from a registered medical practitioner.</p>
+          <p style="margin:10px 0 0;font-size:10px;color:rgba(255,255,255,0.2);line-height:1.5;">⚠️ Medicines order will only be confirmed after verification of a valid payment transaction from customer to our company's account.</p>
         </td></tr>
 
       </table>
