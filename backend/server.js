@@ -249,3 +249,12 @@ app.listen(PORT, () => {
   console.log(`\n🚀  Server running → http://localhost:${PORT}`);
   console.log(`📋  API docs → GET /api/health | /api/products | /api/bank-details\n`);
 });
+
+
+// Serve React static files
+app.use(express.static(path.join(__dirname, '../frontend/build')));
+
+// Catch-all: send React app for any non-API route
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/build/index.html'));
+});
