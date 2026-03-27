@@ -81,22 +81,13 @@ export default function Navbar() {
       </div>
 
       {/* Mobile menu */}
+
       <div className={`${styles.mobileMenu} ${menuOpen ? styles.mobileOpen : ''}`}>
-        {[
-          [n.home,        'hero'],
-          [n.about,       'about'],
-          [n.products,    'products'],
-          [n.orderNow,    'order'],
-        ].map(([label, id]) => (
-          <button key={id} className={styles.mobileLink} onClick={() => scrollTo(id)}>
-            {label}
-          </button>
-        ))}
-        {/* Mobile lang toggle */}
         <button className={styles.mobileLangBtn} onClick={toggle}>
           {lang === 'en' ? '🇨🇳 切换到中文' : '🇬🇧 Switch to English'}
         </button>
       </div>
+      
     </header>
   );
 }

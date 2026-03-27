@@ -177,5 +177,7 @@
 .mobileLangBtn:hover { background: #b2f5ea; }
 
 @media (max-width: 900px) {
-  .rightControls { display: none; }
+  .rightControls { display: flex; }
+  .burger { display: none; }
+  .mobileMenu { display: none; }
 }
