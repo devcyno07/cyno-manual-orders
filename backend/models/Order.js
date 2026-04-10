@@ -54,6 +54,7 @@ const OrderSchema = new mongoose.Schema(
       originalName: { type: String, default: null },
       mimetype:     { type: String, default: null },
       size:         { type: Number, default: null },
+      url:          { type: String, default: null },  // ← ADDED: full accessible URL
     },
 
     // ── Shipping ───────────────────────────────────────────────────
@@ -68,6 +69,11 @@ const OrderSchema = new mongoose.Schema(
 
     emailSent: { type: Boolean, default: false },
     ipAddress: { type: String, default: '' },
+
+    // ── WooCommerce ────────────────────────────────────────────────
+    meta: {
+      wcOrderId: { type: Number, default: null },
+    },
   },
   { timestamps: true }
 );

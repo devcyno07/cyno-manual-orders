@@ -139,6 +139,8 @@ app.post('/api/orders', upload.single('paymentProof'), async (req, res) => {
       return res.status(400).json({ success: false, errors });
     }
 
+    const fileUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+
     // ── Parse items ──
     let items;
     try {
@@ -181,6 +183,7 @@ app.post('/api/orders', upload.single('paymentProof'), async (req, res) => {
         originalName: req.file.originalname,
         mimetype:     req.file.mimetype,
         size:         req.file.size,
+        url: fileUrl
       },
       shippingAddress: {
         remitterName: (remitterName || '').trim(),

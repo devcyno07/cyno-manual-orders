@@ -87,14 +87,12 @@ async function buildLineItems(orderItems) {
     const wcProductId = await findWcProductId(item.name);
 
     if (wcProductId) {
-      // Matched WooCommerce product
       lineItems.push({
         product_id: wcProductId,
         quantity:   item.quantity,
         price:      item.price.toString(),
       });
     } else {
-      // Not found — add as custom line item with subtotal
       lineItems.push({
         name:      item.name,
         quantity:  item.quantity,
@@ -108,6 +106,31 @@ async function buildLineItems(orderItems) {
   return lineItems;
 }
 
+// ── Post payment proof as an internal admin order note ────────────────────
+// WooCommerce order notes render HTML — unlike customer_note which is plain text.
+async function addPaymentProofNote(wcOrderId, paymentProof) {
+  // Resolve the URL from either a string or an object { url: '...' }
+  const proofUrl =
+    typeof paymentProof === 'string'
+      ? paymentProof
+      : paymentProof?.url || '';
+
+  if (!proofUrl) {
+    console.warn(`[WC] No payment proof URL found for WC Order #${wcOrderId} — skipping note`);
+    return;
+  }
+
+  try {
+    await wcRequest('POST', `orders/${wcOrderId}/notes`, {
+      note: `<strong>Payment Proof:</strong> <a href="${proofUrl}" target="_blank" rel="noopener noreferrer">📎 View Uploaded File</a>`,
+      customer_note: false, // internal admin-only note, not sent to customer
+    });
+    console.log(`[WC] Payment proof note added to WC Order #${wcOrderId}`);
+  } catch (err) {
+    console.warn(`[WC] Failed to add payment proof note for Order #${wcOrderId}:`, err.message);
+  }
+}
+
 // ── Main: Create Draft Order in WooCommerce ────────────────────────────────
 async function createWooCommerceOrder(order) {
   if (!WC_URL || !WC_CONSUMER_KEY || !WC_CONSUMER_SECRET) {
@@ -118,12 +141,20 @@ async function createWooCommerceOrder(order) {
   try {
     const addr = order.shippingAddress || {};
 
+    // Resolve payment proof URL early so we can log it
+    const proofUrl =
+      typeof order.paymentProof === 'string'
+        ? order.paymentProof
+        : order.paymentProof?.url || '';
+
+    console.log(`[WC] Payment proof URL resolved: "${proofUrl || 'NONE'}"`);
+
     // Build line items (match by name)
     const lineItems = await buildLineItems(order.items);
 
     // Build order payload
     const payload = {
-      status: 'pending',   // Draft / pending payment
+      status: 'pending',
       currency: 'USD',
 
       // ── Customer Info ──────────────────────────────────────────────────
@@ -156,32 +187,36 @@ async function createWooCommerceOrder(order) {
       // ── Line Items ─────────────────────────────────────────────────────
       line_items: lineItems,
 
-      // ── Order Notes ────────────────────────────────────────────────────
+      // ── Order Notes (plain text only — HTML is stripped here) ──────────
+      // Payment proof is added separately as an order note (HTML renders there).
       customer_note: [
         `Manual Order ID: ${order.orderId}`,
         `Remitter: ${addr.remitterName || 'N/A'}`,
         `Consignee: ${addr.fullName || 'N/A'}`,
         `Sex: ${addr.sex || 'N/A'} | Age: ${addr.age || 'N/A'}`,
         `Contact: ${order.contactNumber}`,
-        `Payment Proof: ${order.paymentProof?.originalName || 'Uploaded'}`,
         `Source: Cyno Manual Orders`,
       ].join('\n'),
 
       // ── Meta Data ──────────────────────────────────────────────────────
       meta_data: [
-        { key: '_mern_order_id',      value: order.orderId },
-        { key: '_remitter_name',      value: addr.remitterName || '' },
-        { key: '_consignee_name',     value: addr.fullName || '' },
-        { key: '_consignee_sex',      value: addr.sex || '' },
-        { key: '_consignee_age',      value: addr.age || '' },
-        { key: '_payment_proof_file', value: order.paymentProof?.originalName || '' },
-        { key: '_order_source',       value: 'cyno-manual-orders' },
+        { key: '_mern_order_id',     value: order.orderId },
+        { key: '_remitter_name',     value: addr.remitterName || '' },
+        { key: '_consignee_name',    value: addr.fullName || '' },
+        { key: '_consignee_sex',     value: addr.sex || '' },
+        { key: '_consignee_age',     value: addr.age || '' },
+        { key: '_payment_proof_url', value: proofUrl },
+        { key: '_bank_receipt_url',  value: proofUrl },
+        { key: '_order_source',      value: 'cyno-manual-orders' },
       ],
     };
 
     const wcOrder = await wcRequest('POST', 'orders', payload);
-
     console.log(`[WC] Draft order created → WC Order #${wcOrder.id} for MERN Order ${order.orderId}`);
+
+    // ── Add payment proof as a clickable HTML note in the admin panel ──
+    await addPaymentProofNote(wcOrder.id, order.paymentProof);
+
     return wcOrder;
 
   } catch (err) {
