@@ -123,23 +123,21 @@ app.post('/api/orders', upload.single('paymentProof'), async (req, res) => {
 
     // ── Validation ──
     const errors = [];
-    if (!customerName?.trim())                      errors.push('Customer name is required');
-    if (!customerEmail?.match(/^\S+@\S+\.\S+$/))    errors.push('Valid email is required');
-    if (!contactNumber?.trim())                     errors.push('Contact number is required');
-    if (!itemsRaw)                                  errors.push('Order items are required');
-    if (!req.file)                                  errors.push('Payment proof is required');
-    if (!addressLine1?.trim())                      errors.push('Street address is required');
-    if (!city?.trim())                              errors.push('City is required');
-    if (!state?.trim())                             errors.push('State is required');
-    if (!postalCode?.trim())                        errors.push('Postal code is required');
-    if (!country?.trim())                           errors.push('Country is required');
+    if (!customerName?.trim())                   errors.push('Customer name is required');
+    if (!customerEmail?.match(/^\S+@\S+\.\S+$/)) errors.push('Valid email is required');
+    if (!contactNumber?.trim())                  errors.push('Contact number is required');
+    if (!itemsRaw)                               errors.push('Order items are required');
+    if (!req.file)                               errors.push('Payment proof is required');
+    if (!addressLine1?.trim())                   errors.push('Street address is required');
+    if (!city?.trim())                           errors.push('City is required');
+    if (!state?.trim())                          errors.push('State is required');
+    if (!postalCode?.trim())                     errors.push('Postal code is required');
+    if (!country?.trim())                        errors.push('Country is required');
 
     if (errors.length) {
-      if (req.file) fs.unlinkSync(req.file.path);
+      if (req.file) fs.unlink(req.file.path, () => {});
       return res.status(400).json({ success: false, errors });
     }
-
-    const fileUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
 
     // ── Parse items ──
     let items;
@@ -168,7 +166,24 @@ app.post('/api/orders', upload.single('paymentProof'), async (req, res) => {
     // ── Generate Order ID ──
     const orderId = `ORD-${Date.now().toString(36).toUpperCase()}-${uuidv4().slice(0, 5).toUpperCase()}`;
 
-    // ── Create order ──
+    // ── Upload proof to WordPress Media Library (blocking — we need the WP URL) ──
+    let proofWpUrl  = '';
+    let proofFileUrl = `https://cyno-manual-orders.cynoindia.com/uploads/${req.file.filename}`;
+
+    try {
+      const { uploadProofToWordPress } = require('./services/woocommerceService');
+      proofWpUrl = await uploadProofToWordPress(
+        req.file.path,
+        req.file.filename,
+        req.file.mimetype
+      );
+      console.log(`[WC] Proof uploaded to WP Media: ${proofWpUrl}`);
+    } catch (err) {
+      console.warn(`[WC] WordPress media upload failed — using MERN URL as fallback: ${err.message}`);
+      proofWpUrl = proofFileUrl; // fallback to direct URL
+    }
+
+    // ── Create order in MongoDB ──
     const order = await Order.create({
       orderId,
       customerName:  customerName.trim(),
@@ -183,7 +198,8 @@ app.post('/api/orders', upload.single('paymentProof'), async (req, res) => {
         originalName: req.file.originalname,
         mimetype:     req.file.mimetype,
         size:         req.file.size,
-        url: fileUrl
+        url:          proofFileUrl,   // MERN server URL (always accessible)
+        wpUrl:        proofWpUrl,     // WordPress media URL (for WP admin)
       },
       shippingAddress: {
         remitterName: (remitterName || '').trim(),
@@ -196,7 +212,7 @@ app.post('/api/orders', upload.single('paymentProof'), async (req, res) => {
         state:        state.trim(),
         postalCode:   postalCode.trim(),
         country:      country.trim(),
-        phone: (addressPhone || contactNumber).trim().replace(/[^\d+\s\-().]/g, ''),
+        phone:        (addressPhone || contactNumber).trim().replace(/[^\d+\s\-().]/g, ''),
       },
       ipAddress: req.ip,
     });
@@ -208,7 +224,7 @@ app.post('/api/orders', upload.single('paymentProof'), async (req, res) => {
       })
       .catch(err => console.error('[Email async error]', err.message));
 
-    // ── Create WooCommerce draft order (non-blocking) ──
+    // ── Create WooCommerce order (non-blocking) ──
     createWooCommerceOrder(order)
       .then(wcOrder => {
         if (wcOrder?.id) {
@@ -230,6 +246,7 @@ app.post('/api/orders', upload.single('paymentProof'), async (req, res) => {
         customerEmail: order.customerEmail,
       },
     });
+
   } catch (err) {
     console.error('[POST /api/orders]', err);
     if (req.file) fs.unlink(req.file.path, () => {});
@@ -257,7 +274,11 @@ app.listen(PORT, () => {
 // Serve React static files
 app.use(express.static(path.join(__dirname, '../frontend/build')));
 
-// Catch-all: send React app for any non-API route
+// ─── Catch-all: ONLY for non-API, non-uploads routes ─────────────────────────
 app.get('*', (req, res) => {
+    // Don't intercept uploads
+    if (req.path.startsWith('/uploads/')) {
+        return res.status(404).json({ error: 'File not found' });
+    }
     res.sendFile(path.join(__dirname, '../frontend/build/index.html'));
 });

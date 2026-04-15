@@ -6,6 +6,9 @@
 
 const https = require('https');
 const http  = require('http');
+const path = require('path');
+const fs   = require('fs');
+const FormData = require('form-data');
 
 const WC_URL             = process.env.WC_URL             || '';
 const WC_CONSUMER_KEY    = process.env.WC_CONSUMER_KEY    || '';
@@ -131,6 +134,68 @@ async function addPaymentProofNote(wcOrderId, paymentProof) {
   }
 }
 
+
+// ── Upload payment proof to WordPress Media Library ───────────────────────
+// ── Upload payment proof to WordPress Media Library ───────────────────────
+// Uses WordPress Application Password (separate from WooCommerce API keys)
+// Set WP_APP_USER and WP_APP_PASSWORD in your .env file
+async function uploadProofToWordPress(filePath, filename, mimetype) {
+    return new Promise((resolve, reject) => {
+        const wpUser     = process.env.WP_APP_USER     || '';
+        const wpPassword = process.env.WP_APP_PASSWORD || '';
+
+        if (!WC_URL || !wpUser || !wpPassword) {
+            return reject(new Error('WordPress credentials not configured — set WP_APP_USER and WP_APP_PASSWORD in .env'));
+        }
+
+        const base   = WC_URL.replace(/\/$/, '');
+        // Remove spaces from app password (WordPress generates it with spaces)
+        const auth   = Buffer.from(`${wpUser}:${wpPassword.replace(/\s/g, '')}`).toString('base64');
+        const urlStr = `${base}/wp-json/wp/v2/media`;
+        const parsed = new URL(urlStr);
+
+        const fileStream = fs.createReadStream(filePath);
+        const form = new FormData();
+        form.append('file', fileStream, { filename, contentType: mimetype });
+
+        const options = {
+            hostname: parsed.hostname,
+            port:     parsed.port || (parsed.protocol === 'https:' ? 443 : 80),
+            path:     parsed.pathname,
+            method:   'POST',
+            headers: {
+                'Authorization':       `Basic ${auth}`,
+                'Content-Disposition': `attachment; filename="${filename}"`,
+                ...form.getHeaders(),
+            },
+        };
+
+        const transport = parsed.protocol === 'https:' ? https : http;
+        const req = transport.request(options, (res) => {
+            let data = '';
+            res.on('data', chunk => data += chunk);
+            res.on('end', () => {
+                try {
+                    const result = JSON.parse(data);
+                    if (res.statusCode >= 400) {
+                        reject(new Error(`WP Media API ${res.statusCode}: ${result.message || data}`));
+                    } else {
+                        const url = result.source_url || result.guid?.rendered || '';
+                        console.log(`[WC] Proof uploaded to WordPress Media Library: ${url}`);
+                        resolve(url);
+                    }
+                } catch {
+                    reject(new Error(`WP Media parse error: ${data}`));
+                }
+            });
+        });
+
+        req.on('error', reject);
+        req.setTimeout(30000, () => { req.destroy(); reject(new Error('WordPress upload timeout')); });
+        form.pipe(req);
+    });
+}
+
 // ── Main: Create Draft Order in WooCommerce ────────────────────────────────
 async function createWooCommerceOrder(order) {
   if (!WC_URL || !WC_CONSUMER_KEY || !WC_CONSUMER_SECRET) {
@@ -141,26 +206,22 @@ async function createWooCommerceOrder(order) {
   try {
     const addr = order.shippingAddress || {};
 
-    // Resolve payment proof URL early so we can log it
-    const proofUrl =
-      typeof order.paymentProof === 'string'
-        ? order.paymentProof
-        : order.paymentProof?.url || '';
+    // Use already-uploaded WP URL if available, otherwise fallback to MERN URL
+    const proofUrl = order.paymentProof?.wpUrl 
+      || order.paymentProof?.url 
+      || '';
 
-    console.log(`[WC] Payment proof URL resolved: "${proofUrl || 'NONE'}"`);
+    console.log(`[WC] Using payment proof URL: "${proofUrl || 'NONE'}"`);
 
-    // Build line items (match by name)
     const lineItems = await buildLineItems(order.items);
 
-    // Build order payload
     const payload = {
-      status: 'pending',
-      currency: 'USD',
-      set_paid: false,
-      payment_method: 'bacs',
-      payment_method_title: 'Direct Bank Transfer',
+      status:                'pending',
+      currency:              'INR',
+      set_paid:              false,
+      payment_method:        'bacs',
+      payment_method_title:  'Direct Bank Transfer',
 
-      // ── Customer Info ──────────────────────────────────────────────────
       billing: {
         first_name: order.customerName.split(' ')[0] || order.customerName,
         last_name:  order.customerName.split(' ').slice(1).join(' ') || '',
@@ -174,7 +235,6 @@ async function createWooCommerceOrder(order) {
         country:    addr.country      || '',
       },
 
-      // ── Shipping Address ───────────────────────────────────────────────
       shipping: {
         first_name: (addr.fullName || order.customerName).split(' ')[0],
         last_name:  (addr.fullName || order.customerName).split(' ').slice(1).join(' ') || '',
@@ -187,11 +247,8 @@ async function createWooCommerceOrder(order) {
         country:    addr.country      || '',
       },
 
-      // ── Line Items ─────────────────────────────────────────────────────
       line_items: lineItems,
 
-      // ── Order Notes (plain text only — HTML is stripped here) ──────────
-      // Payment proof is added separately as an order note (HTML renders there).
       customer_note: [
         `Manual Order ID: ${order.orderId}`,
         `Remitter: ${addr.remitterName || 'N/A'}`,
@@ -201,26 +258,28 @@ async function createWooCommerceOrder(order) {
         `Source: Cyno Manual Orders`,
       ].join('\n'),
 
-      // ── Meta Data ──────────────────────────────────────────────────────
       meta_data: [
-        { key: '_mern_order_id',      value: order.orderId },
-        { key: '_remitter_name',      value: addr.remitterName || '' },
-        { key: '_consignee_name',     value: addr.fullName || '' },
-        { key: '_consignee_sex',      value: addr.sex || '' },
-        { key: '_consignee_age',      value: addr.age || '' },
-        { key: '_payment_proof_file', value: order.paymentProof?.originalName || '' },
-        { key: '_order_source',       value: 'cyno-manual-orders' },
-        { key: '_bank_receipt_url',   value: order.paymentProof?.filename
-            ? `${process.env.WC_URL}/wp-content/uploads/mern-receipts/${order.paymentProof.filename}`
-            : '' },
+        { key: '_mern_order_id',     value: order.orderId },
+        { key: '_remitter_name',     value: addr.remitterName || '' },
+        { key: '_consignee_name',    value: addr.fullName || '' },
+        { key: '_consignee_sex',     value: addr.sex || '' },
+        { key: '_consignee_age',     value: addr.age || '' },
+        { key: '_bank_receipt_url',  value: proofUrl },
+        { key: '_payment_proof_url', value: proofUrl },
+        { key: '_order_source',      value: 'cyno-manual-orders' },
       ],
     };
 
     const wcOrder = await wcRequest('POST', 'orders', payload);
-    console.log(`[WC] Draft order created → WC Order #${wcOrder.id} for MERN Order ${order.orderId}`);
+    console.log(`[WC] Order created → WC #${wcOrder.id} for MERN ${order.orderId}`);
 
-    // ── Add payment proof as a clickable HTML note in the admin panel ──
-    await addPaymentProofNote(wcOrder.id, order.paymentProof);
+    // Add clickable HTML note in admin
+    if (proofUrl) {
+      await wcRequest('POST', `orders/${wcOrder.id}/notes`, {
+        note: `<strong>💳 Payment Proof:</strong> <a href="${proofUrl}" target="_blank" rel="noopener noreferrer">📎 View / Download Receipt</a>`,
+        customer_note: false,
+      });
+    }
 
     return wcOrder;
 
@@ -230,4 +289,4 @@ async function createWooCommerceOrder(order) {
   }
 }
 
-module.exports = { createWooCommerceOrder };
+module.exports = { createWooCommerceOrder, uploadProofToWordPress };

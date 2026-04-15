@@ -55,6 +55,7 @@ const OrderSchema = new mongoose.Schema(
       mimetype:     { type: String, default: null },
       size:         { type: Number, default: null },
       url:          { type: String, default: null },  // ← ADDED: full accessible URL
+      wpUrl:        { type: String },
     },
 
     // ── Shipping ───────────────────────────────────────────────────
