@@ -156,6 +156,9 @@ async function createWooCommerceOrder(order) {
     const payload = {
       status: 'pending',
       currency: 'USD',
+      set_paid: false,
+      payment_method: 'bacs',
+      payment_method_title: 'Direct Bank Transfer',
 
       // ── Customer Info ──────────────────────────────────────────────────
       billing: {
@@ -200,14 +203,16 @@ async function createWooCommerceOrder(order) {
 
       // ── Meta Data ──────────────────────────────────────────────────────
       meta_data: [
-        { key: '_mern_order_id',     value: order.orderId },
-        { key: '_remitter_name',     value: addr.remitterName || '' },
-        { key: '_consignee_name',    value: addr.fullName || '' },
-        { key: '_consignee_sex',     value: addr.sex || '' },
-        { key: '_consignee_age',     value: addr.age || '' },
-        { key: '_payment_proof_url', value: proofUrl },
-        { key: '_bank_receipt_url',  value: proofUrl },
-        { key: '_order_source',      value: 'cyno-manual-orders' },
+        { key: '_mern_order_id',      value: order.orderId },
+        { key: '_remitter_name',      value: addr.remitterName || '' },
+        { key: '_consignee_name',     value: addr.fullName || '' },
+        { key: '_consignee_sex',      value: addr.sex || '' },
+        { key: '_consignee_age',      value: addr.age || '' },
+        { key: '_payment_proof_file', value: order.paymentProof?.originalName || '' },
+        { key: '_order_source',       value: 'cyno-manual-orders' },
+        { key: '_bank_receipt_url',   value: order.paymentProof?.filename
+            ? `${process.env.WC_URL}/wp-content/uploads/mern-receipts/${order.paymentProof.filename}`
+            : '' },
       ],
     };
 
