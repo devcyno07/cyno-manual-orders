@@ -100,13 +100,13 @@ const translations = {
         { icon:'🆘', title:'24/7 Help Support',    desc:'Help available around the clock' },
       ],
       rxNotice:     'Upload a photo of your payment proof in the Payment step of the form below. Our Team will verify it before dispensing.',
-      footerPhone:  '📞 +880 1800-CYNO',
-      footerEmail:  '✉️ orders@medicare-pharmacy.com',
+      footerPhone:  '📞 +91 76-1002-1002',
+      footerEmail:  '✉️ info1@cyno.co.in',
       footerHours:  '🕐 Open 24/7',
-      footerCopy:   '© 2024 Cyno Pharmacy',
+      footerCopy:   '© 2024 Cyno Medicaments',
       footerPrivacy:'Privacy Policy',
       footerTerms:  'Terms of Service',
-      disclaimer:   '⚠️ Cyno Pharmacy is a licensed pharmaceutical establishment. All prescription medicines require a valid prescription from a registered medical practitioner.',
+      disclaimer:   '⚠️ Cyno Medicaments is a licensed pharmaceutical establishment. All prescription medicines require a valid prescription from a registered medical practitioner.',
     },
 
     // ── Order Form ──────────────────────────────────────────
